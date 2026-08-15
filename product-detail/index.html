@@ -1087,7 +1087,7 @@
             if (!rawWeights) return [];
             if (typeof rawWeights === 'string') {
                 try {
-                    const parsed = JSON.parse(rawWeights);
+                    const parsed = JSON.parse(rawWeights.replace(/\\/g, ''));
                     return Array.isArray(parsed) ? parsed.map(w => parseFloat(w)).filter(w => !isNaN(w) && w > 0) : [];
                 } catch (e) {
                     return rawWeights.split(',').map(w => parseFloat(w.trim())).filter(w => !isNaN(w) && w > 0);
