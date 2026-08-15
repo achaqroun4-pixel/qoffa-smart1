@@ -1214,7 +1214,7 @@
             if (!rawWeights) return [];
             if (typeof rawWeights === 'string') {
                 try {
-                    const parsed = JSON.parse(rawWeights);
+                    const parsed = JSON.parse(rawWeights.replace(/\\/g, ''));
                     return Array.isArray(parsed) ? parsed.map(w => parseFloat(w)).filter(w => !isNaN(w) && w > 0) : [];
                 } catch (e) {
                     return rawWeights.split(',').map(w => parseFloat(w.trim())).filter(w => !isNaN(w) && w > 0);
@@ -1623,10 +1623,9 @@
             showToast(`⏳ جاري حجز ${selection.weight}${product.unit || 'كجم'} - ${product.name_fr || product.name}...`, 'info');
             const synced = await vwSyncWithBaserow(productId, selection.weight, 'remove');
             
-            // La disponibilité distante est vérifiée en priorité, mais une réponse réseau
-            // ne doit jamais masquer l’ajout local demandé par l’utilisateur.
             if (!synced) {
-                console.warn(`La réservation distante du poids ${selection.weight}${product.unit || 'كجم'} a échoué ; ajout local conservé.`);
+                showToast('⚠️ تعذر حجز هذا الوزن، قد يكون محجوزاً', 'error');
+                return;
             }
             
             const cartItemId = `${productId}_${selection.weight}`;
@@ -2009,7 +2008,7 @@
                 }
                 const data = await response.json();
                 const rows = Array.isArray(data) ? data : (data.results || []);
-                const targetPage = './';
+                const targetPages = new Set(['./', '/', 'home', 'homepage', 'accueil', 'index', 'index.html', '']);
                 banners = rows.map(row => {
                     const pageValue = getBaserowSingleSelectValue(row.page || row.Page || row.page_name || row.Page_name || row.pageName || row.PageName || '');
                     return {
@@ -2025,7 +2024,7 @@
                         videoField: row.video || row.Video || row.video_url || row.Video_url || row.youtube || row.Youtube || row.embed || null,
                         discoveredUrls: []
                     };
-                }).filter(b => b.active === true && b.page === targetPage);
+                }).filter(b => b.active === true && targetPages.has(b.page));
 
                 banners.forEach(b => {
                     try {
